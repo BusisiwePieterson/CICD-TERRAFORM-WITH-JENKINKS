@@ -5,7 +5,7 @@
 
 ### PROJECT-OVERVIEW
 
-In this project I build a CI/CD pipeline tailored for Terraform projects. By automating the building and deployment of infrastucture changes, the piplenine enhances speed, reliability and consistency across enviroments. 
+In this project I build a CI/CD pipeline tailored for Terraform projects. By automating the building and deployment of infrastucture changes, the piplenine enhances speed, reliability and consistency across environments. 
 
 #### TECH STACK USED:
 - **Terraform** : To build the infrastructure on AWS
@@ -142,52 +142,101 @@ We will first Set up a Git repository with Terraform code. The use case we will 
 
 - Your terraform code has an existing set of resources that it creates in your preffered cloud provider.
 
-- As a DevOps Engineer you intend to create an additionalresources by updating the code base with the new resource that needs to be created.
+- As a DevOps Engineer you intend to create an additional resources by updating the code base with the new resource that needs to be created.
 
-We are using this code https://github.com/dareyio/terraform-aws-pipeline you can use any Terraform code.
+We are using this code https://github.com/dareyio/terraform-aws-pipeline you can use any Terraform code. 
 
+1. Clone the code base into your local machine. This is where you will create additional resources.
+
+
+![image](/images/Screenshot_15.png)
+
+2. In the `provider.tf` file create an s3 bucket in your AWS account ad push your latest chnages to GitHub then run `Terraform init, Terraform plan, Terraform apply`
+
+![image](/images/Screenshot_14.png)
+
+![image](/images/Screenshot_19.png)
+
+### INSTALL PLUGINS FOR JENKINS
+
+1. To connect your GitHub repo to Jenkins, you first need to install "**GitHub Intergration**" plugin.
+
+Navigate to *Manage Jenkins --> Plugins --> Available plugins --> GitHub Intergration*
 ![image](/images/Screenshot_35.png)
 
+2. Install the "**Terraform**" plugin, this plugin enables seamless intergration of Terraform into Jenkins pipelines.
+
+Navigate to *Manage Jenkins --> Plugins --> Available plugins --> Terraform*
 ![image](/images/Screenshot_36.png)
 
+3. Install the "**AWS Credentials**" for securely managing and using AWS credentials within Jenkins.
+
+Navigate to *Manage Jenkins --> Plugins --> Available plugins --> AWS Credentials*
 ![image](/images/Screenshot_37.png)
 
+### CONFIGURE GITHUB CREDENTIALS IN JENKINS
+
+- Jenkins needs to know how to connect to GitHub, in the case that a repository is private, it won't know how to access the repository. Hence you need to store GitHub credentials in Jenkins.
+
+In Github navigate to your *profile --> Click on "Settings" --> scroll down to "Developer Settings" --> Tokens(classic)*
 ![image](/images/Screenshot_38.png)
 
+Generate a new token
 ![image](/images/Screenshot_39.png)
-
 ![image](/images/Screenshot_40.png)
 
+Copy the access token and save it in notepad for use later.
 ![image](/images/Screenshot_41.png)
 
+
+In Jenkins, navigate to *Manage Jenkins --> Credentials --> global --> Add credentials*
 ![image](/images/Screenshot_42.png)
+
+
+Select username and password. Use the Access token generated earlier on Github as your password and add your Github username under `username`
 
 ![image](/images/Screenshot_43.png)
 
+In the credential section you will be able to see the created credential.
+
 ![image](/images/Screenshot_44.png)
 
+### CONFIGURE AWS CREDENTIALS IN JENKINS
+
+
+Assuming you have an IAM user, access your AWS credentials by going to the console and navigate to the directory where your credentials are stored.
+
+From the directory --> *cd .aws --> ls -->cat credentials*
 ![image](/images/Screenshot_45.png)
 
-![image](/images/Screenshot_46.png)
+Now you need to create a second credentials for AWS secret and access key. Since you installed the **"AWS Credentials"** plugin earlier, you will be able to see it in the drop-down menu. Scroll down and add your IAM access and secret key.
 
+![image](/images/Screenshot_46.png)
 ![image](/images/Screenshot_47.png)
 
+
+#### SETUP MULTIBRANCH PIPELINE
+
+
+From the Jenkins dashboard, click on **"New Item"**
 ![image](/images/Screenshot_48.png)
 
+
+Give it a name and description
 ![image](/images/Screenshot_49.png)
 
+Select the type of source of the code and Jenkinsfile
 ![image](/images/Screenshot_50.png)
+
+Select the credentials to be used to connect to Github from Jenkins and add the repository URL that you forked and cloned earlier.
 
 ![image](/images/Screenshot_51.png)
 
+
+You will see the scanning of the repository for branches and the Jenkisfile
 ![image](/images/Screenshot_52.png)
 
-![image](/images/Screenshot_53.png)
-
-![image](/images/Screenshot_54.png)
-
-![image](/images/Screenshot_55.png)
-
+Pipeline run and Console output
 ![image](/images/Screenshot_56.png)
 
 ![image](/images/Screenshot_57.png)
