@@ -8,12 +8,12 @@
 In this project I build a CI/CD pipeline tailored for Terraform projects. By automating the building and deployment of infrastucture changes, the piplenine enhances speed, reliability and consistency across environments. 
 
 #### TECH STACK USED:
-- **Terraform** : To build the infrastructure on AWS
+- **Terraform** : To provision our resources on AWS
 - **Docker** : Jenkins has a Docker image that can be used out of the box to run a container with all relevant dependencies for Jenkins. 
-- **JENKINS** :  To build the CI/CD pipeline.
+- **JENKINS** :  Jenkins as our continuous integration server, to automate the building and deployment of code changes.
 - **AWS EC2** (*optional*) : I used an EC2 instance to run Docker because Docker Desktop was consuming a lot of RAM, feel free to use Docker Desktop and run the project locally if your computer allows.
-- **GIT & GITHUB** : To push code and GitHub Webhook to trigger Jenkins.
-- **Slack** : For post notifications of the CI/CD pipeline. Slack will alert us to let us know if the build failed or was a success. 
+- **GITHUB** : We use Github Webhooks to ensures that Jenkins is automatically triggered whenever changes are pushed to the repository, initiating the CI/CD process.
+- **Slack** : We configure Jenkins to send a notification to Slack updating the team on the build and deployment status. 
 
 ### SETTING UP THE ENVIRONMENT
 
@@ -182,10 +182,12 @@ In Github navigate to your *profile --> Click on "Settings" --> scroll down to "
 ![image](/images/Screenshot_38.png)
 
 Generate a new token
+
 ![image](/images/Screenshot_39.png)
 ![image](/images/Screenshot_40.png)
 
 Copy the access token and save it in notepad for use later.
+
 ![image](/images/Screenshot_41.png)
 
 
@@ -223,9 +225,11 @@ From the Jenkins dashboard, click on **"New Item"**
 
 
 Give it a name and description
+
 ![image](/images/Screenshot_49.png)
 
 Select the type of source of the code and Jenkinsfile
+
 ![image](/images/Screenshot_50.png)
 
 Select the credentials to be used to connect to Github from Jenkins and add the repository URL that you forked and cloned earlier.
@@ -233,101 +237,172 @@ Select the credentials to be used to connect to Github from Jenkins and add the 
 ![image](/images/Screenshot_51.png)
 
 
-You will see the scanning of the repository for branches and the Jenkisfile
+You will see the scanning of the repository for branches and the Jenkisfile.
+
 ![image](/images/Screenshot_52.png)
 
-Pipeline run and Console output
-![image](/images/Screenshot_56.png)
+Pipeline run and Console output, **Terraform Apply** failed.
 
+![image](/images/Screenshot_56.png)
 ![image](/images/Screenshot_57.png)
+
+
+To fix the Scripts not permitted to use method, go to the Jenkins 
+Dashboard, click on `Manage Jenkins`, scroll down to the `Security Tab` and click on `In-Process Script Approval`
 
 ![image](/images/Screenshot_58.png)
 
+Click on `Approve`
+
 ![image](/images/Screenshot_59.png)
+
+A manual intervention step asking for confirmation before proceeding. If `Yes` is clicked, it runs the `terraform init & apply`
 
 ![image](/images/Screenshot_60.png)
 
-![image](/images/Screenshot_61.png)
+### EXTEND THE PIPELINE
 
+Now extend the existing pipeline script to inclued additional stages and improve the existing ones.
+
+1. Create a new branch from the `main` branch 
+
+![image](/images/Screenshot_61.png)
 ![image](/images/Screenshot_62.png)
+
+2. Scan the Jenkins pipeline so that the new branch can be discovered.
 
 ![image](/images/Screenshot_63.png)
 
+3. In the new branch, correct and enhance the "Terraform Apply"
+ stage mistakenly contains a `sh terraform aply -out=tfplan` command. Correct this to `sh 'terraform apply tfplan`
+
 ![image](/images/Screenshot_64.png)
 
+4. Add logging to track the progress of the pipeline within both `Terraform plan & apply`. Use `echo` command to print messages before and after each execution so that in the console output everyone can understand what is happening at each stage
+
 ![image](/images/Screenshot_65.png)
-
 ![image](/images/Screenshot_66.png)
-
 ![image](/images/Screenshot_67.png)
+
+
+4. Introduce a new stage in the pipeline script to validate the Terraform configurations using `terraform validate`. The purpose of this stage is to validate the syntax, consitency, and correctness of Terraform configuration files in the directory it is run.
 
 ![image](/images/Screenshot_68.png)
 
-![image](/images/Screenshot_69.png)
+5. Introduce a **"Cleanup Stage"** that runs regardless of whether previous stages succeeded or failed. This stage includes commands to clean up any temporary files or state that the pipeline may have created.
+
 
 ![image](/images/Screenshot_70.png)
 
-![image](/images/Screenshot_71.png)
+Go back to your `terraform-cicd` multibranch pipeline, initiate another build and move your cursor to the Terraform Apply stage and click on 'Yes' to apply changes.
 
-![image](/images/Screenshot_72.png)
+You will notice that `Terraform Apply` has been skipped and that is because it has failed. Now because we introduced the `Cleanup` stage the build did not stop, it skipped to the next stage.
+
+The reason that it has skipped is because we are on the `refactor` branch and should be on `main` branch
 
 ![image](/images/Screenshot_73.png)
+![image](/images/Screenshot_72.png)
 
-![image](/images/Screenshot_74.png)
+#
 
-![image](/images/Screenshot_75.png)
+### CREATING SLACK FOR NOTIFICATIONS
 
-![image](/images/Screenshot_76.png)
+6. Add error handling to the pipeline. For instance, if `"Terraform Apply"` fails, the pipeline should be handle this gracefully, perhaps by sending a notification or logging detailed error messages. In my case I am using Slack to send the notifications.
 
-![image](/images/Screenshot_77.png)
+The first thing you need is a `Slack channel` this is where notifications will be sent to the team.
 
+1. Got to https://slack.com/get-started#/createnew
+2. Enter your email address and click **Continue**
+3. Check your email for a confirmation coe. 
+4. Enter your code, then click **Create a Workspace** and follow the prompts.
 
-![image](/images/Screenshot_81.png)
+Enter the name of your company. Click -->`next`
 
 ![image](/images/Screenshot_82.png)
-
 ![image](/images/Screenshot_83.png)
 
-![image](/images/Screenshot_84.png)
+Now you need to intergrate Slack with Jenkins, go to your profile and under `Manage` click on `Installed Apps` then search for `Jenkins` then click on `Add to Slack`
 
+![image](/images/Screenshot_84.png)
 ![image](/images/Screenshot_85.png)
+
+ Scroll down you will see that your channel has been added. 
+ `#jenkins-build` once you see that click on `Add Jenkins CI Intergration`
 
 ![image](/images/Screenshot_86.png)
 
+When you scroll down you will find more instructions.
+
 ![image](/images/Screenshot_87.png)
 
-![image](/images/Screenshot_88.png)
+Go back to your Jenkins server and follow the above instructions.
 
+Click on **Manage Jenkins --> Plugins -->Available Plugins --> Slack Notification** plugin and install it.
+![image](/images/Screenshot_88.png)
 ![image](/images/Screenshot_89.png)
 
-![image](/images/Screenshot_90.png)
+Next you need to add credentials for Jenkins to interact with Slack. Go back to Slack and copy the `Intergration Token Credential ID`
 
 ![image](/images/Screenshot_91.png)
 
+Then, go back to Jenkins. **Manage Jenkins --> Credentials --> System --> Global credentials**
+
+![image](/images/Screenshot_90.png)
+
+On the drop-down select "Kind" as `Secret text` then paste the `Intergration Token Credential ID` that you copied under "Secret"
+
 ![image](/images/Screenshot_92.png)
+
+Then follow the next steps.
 
 ![image](/images/Screenshot_93.png)
 
-![image](/images/Screenshot_94.png)
+Scroll down you will see that `Slack` is added then select your workspace and the credentials you added and click on `Test connection`
+to test the connection between Slack and Jenkins. If everything is configured correctly, you should see `Success`
 
 ![image](/images/Screenshot_95.png)
 
+
+**Now go back to your Jenkinsfile, you need to write a script for the Slack notification.**
+
+
+First define your variable at the top of the Jenkinsfile.
+
 ![image](/images/Screenshot_96.png)
+
+Then inside the `Post`stage add the script for a Slack notification.
 
 ![image](/images/Screenshot_97.png)
 
+Next, run another build. You will see that my build has failed. `Error: Could not launch On-Demand Instances: VpcuLimitExceeded`
+
 ![image](/images/Screenshot_98.png)
+![image](/images/Screenshot_81.png)
+
+So our build failed because of the Limit, however when you going to the `AWS console`, you will see that other resources are created successfully.
+
+![image](/images/Screenshot_77.png)
+
+Now go back to `Slack` and you will see that the notfication of the build failure was sent to the team.
 
 ![image](/images/Screenshot_99.png)
 
-![image](/images/Screenshot_100.png)
+To fix the error you can write a request to AWS to increase the Vpcu Limit, but in this case we will not be doing that, once it has been increased the build should run successfully.
+
+#### DESTROY RESOURCES
+
+Lastly, we need to destroy all the resources that are running. Go to your local system and go to the path of the project. Run `terraform init` then `terraform destroy`
 
 ![image](/images/Screenshot_101.png)
 
+Next to 'Enter a value' type `Yes`
 ![image](/images/Screenshot_102.png)
-
 ![image](/images/Screenshot_103.png)
 
+Go back to your `AWS console` to confirm that resources have been destroyed.
+
 ![image](/images/Screenshot_80.png)
+
+# THE END !!
 
 
