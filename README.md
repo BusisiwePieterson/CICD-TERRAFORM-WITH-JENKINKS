@@ -403,6 +403,17 @@ Go back to your `AWS console` to confirm that resources have been destroyed.
 
 ![image](/images/Screenshot_80.png)
 
+
+### CHALLENGES ENCOUNTERED DURING PROJECT
+
+1. I kept on getting an EKS permissions error, even though my user had full `AdministratorAccess` permissions. 
+
+- Solution : I had to change the region that I was using.
+
+2. Writting declarative scripts to extend my pipeline
+
+- Solution : Used the documentation and alot of googling to understand the syntax.
+
 # THE END !!
 
 
